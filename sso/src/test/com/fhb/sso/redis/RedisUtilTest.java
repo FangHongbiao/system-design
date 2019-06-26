@@ -1,7 +1,6 @@
-package com.fhb.customer;
+package com.fhb.sso.redis;
 
-import com.fhb.customer.customer.CustomerStarterApplication;
-import com.fhb.customer.customer.HelloService;
+import com.fhb.sso.redis.redis.RedisUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,21 +12,29 @@ import org.springframework.test.context.junit4.SpringRunner;
  * User: fhb
  * Email: fhb7218@gmail.com
  * Date: 2019/6/26
- * Time: 16:47
+ * Time: 21:15
  *
  * @author hbfang
  */
 
-
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = CustomerStarterApplication.class)
-public class CustomerStarterApplicationTest {
-
+@SpringBootTest(classes = RedisUtil.class)
+public class RedisUtilTest {
     @Autowired
-    HelloService helloService;
+    private RedisUtil redisUtil;
 
     @Test
-    public void contextLoads() {
-        System.out.println(helloService.sayHello());
+    public void redisAdd() {
+        redisUtil.set("name", "fhb");
+    }
+
+    @Test
+    public void redisDelete() {
+        redisUtil.del("name");
+    }
+
+    @Test
+    public void redisModify() {
+        redisUtil.set("name", "hahah");
     }
 }
