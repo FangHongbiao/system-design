@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fhb.sso.core.mapper.UserMapper">
+  <resultMap id="BaseResultMap" type="com.fhb.sso.core.domain.User">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <result column="username" jdbcType="VARCHAR" property="username" />
+    <result column="password" jdbcType="VARCHAR" property="password" />
+    <result column="tel" jdbcType="VARCHAR" property="tel" />
+    <result column="sex" jdbcType="CHAR" property="sex" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="msg" jdbcType="VARCHAR" property="msg" />
+  </resultMap>
+</mapper>
