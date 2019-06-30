@@ -25,9 +25,9 @@ public class RedisUtilTest {
 
     @Test
     public void redisGet() {
-        Object hahh = redisUtil.get("hahh");
+        Object hahh = redisUtil.get("test");
         System.out.println(hahh == null);
-        System.out.println();
+        System.out.println(hahh);
     }
 
     @Test

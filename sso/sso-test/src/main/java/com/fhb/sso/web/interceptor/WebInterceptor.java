@@ -1,7 +1,7 @@
 package com.fhb.sso.web.interceptor;
 
 import com.alibaba.druid.util.StringUtils;
-import com.fhb.sso.web.domain.User;
+import com.fhb.common.domain.User;
 import com.fhb.sso.web.redis.RedisUtil;
 import com.fhb.sso.web.utils.CookieUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,8 +59,9 @@ public class WebInterceptor implements HandlerInterceptor {
             if (!StringUtils.isEmpty(token)) {
 
                 String username = (String) redisUtil.get(token);
-
+                System.out.println(username);
                 if (username != null) {
+                    System.out.println(redisUtil.get(username));
                     user = (User) redisUtil.get(username);
 
                     // 创建局部会话

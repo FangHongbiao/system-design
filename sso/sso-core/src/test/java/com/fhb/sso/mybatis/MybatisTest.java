@@ -1,7 +1,7 @@
 package com.fhb.sso.mybatis;
 
 import com.fhb.sso.core.SSOApplication;
-import com.fhb.sso.core.domain.User;
+import com.fhb.common.domain.User;
 import com.fhb.sso.core.mapper.UserMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;

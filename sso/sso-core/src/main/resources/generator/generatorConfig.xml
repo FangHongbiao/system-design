@@ -25,7 +25,7 @@
         </jdbcConnection>
 
         <!-- 配置实体类存放路径 -->
-        <javaModelGenerator targetPackage="com.fhb.sso.core.domain" targetProject="src/main/java"/>
+        <javaModelGenerator targetPackage="com.fhb.common.domain" targetProject="src/main/java"/>
 
         <!-- 配置 XML 存放路径 -->
         <sqlMapGenerator targetPackage="mapper" targetProject="src/main/resources"/>

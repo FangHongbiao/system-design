@@ -46,7 +46,7 @@ spring:
       content-type: text/html
 
 mybatis:
-  type-aliases-package: com.fhb.sso.core.domain
+  type-aliases-package: com.fhb.common.domain
   mapper-locations: classpath:mapper/*.xml
 
 

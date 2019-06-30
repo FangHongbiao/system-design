@@ -2,10 +2,11 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>SSO登录</title>
+    <title>SSO登录首页</title>
 </head>
 <body>
 
+<p>SSO 登录页面</p>
 <th:block th:if="${user != null}">
     <span>欢迎<span th:text="${user.username}"></span>回来</span>
 </th:block>
@@ -15,7 +16,7 @@
 <th:block th:if="${user == null}">
 <form action="login" method="post">
     <input name="username">
-    <input name="url" type="hidden" th:text="${url}">
+    <input name="url" type="hidden" th:value="${url}">
     <input name="password" type="password">
     <input value="提交" type="submit">
 </form>

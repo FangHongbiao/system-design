@@ -1,11 +1,15 @@
-package com.fhb.sso.web.domain;
+package com.fhb.common.domain;
 
 import javax.persistence.Column;
 import javax.persistence.Table;
+import java.io.Serializable;
 import java.util.Date;
 
 @Table(name = "sso.user")
-public class User {
+public class User implements Serializable{
+
+    private static final long serialVersionUID = -7761235342114789768L;
+
     @Override
     public String toString() {
         return "User{" +

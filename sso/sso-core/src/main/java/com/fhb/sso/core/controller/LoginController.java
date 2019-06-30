@@ -1,7 +1,7 @@
 package com.fhb.sso.core.controller;
 
 import com.alibaba.druid.util.StringUtils;
-import com.fhb.sso.core.domain.User;
+import com.fhb.common.domain.User;
 import com.fhb.sso.core.redis.RedisUtil;
 import com.fhb.sso.core.service.LoginService;
 import com.fhb.sso.core.utils.CookieUtils;
@@ -43,15 +43,16 @@ public class LoginController {
         String token = CookieUtils.getCookie(request, "token");
 
         if (!StringUtils.isEmpty(token)) {
-            Object usernameObj = redisUtil.get(token);
+            Object username = redisUtil.get(token);
 
-            if (usernameObj != null) {
-                String username = (String) usernameObj;
-                Object userObj = redisUtil.get(username);
 
-                if (userObj != null) {
+            if (username != null) {
+
+                Object user = redisUtil.get(username.toString());
+
+                if (user != null) {
                     try {
-                        User user = (User) userObj;
+
 
                         if (!StringUtils.isEmpty(url)) {
                             return "redirect:" + url;
@@ -78,7 +79,7 @@ public class LoginController {
             String token = UUID.randomUUID().toString();
             boolean isSuccess = redisUtil.set(token, username, 60 * 60 * 24);
             if (isSuccess) {
-                CookieUtils.setCookie(response, "token", token);
+                CookieUtils.setCookie(response, "token", token, 60 * 60 * 24);
                 if (StringUtils.isEmpty(url)) {
                     url = "/login";
                 }
@@ -93,5 +94,12 @@ public class LoginController {
             redirectAttributes.addFlashAttribute("message", "用户名或密码错误");
             return "redirect:/login";
         }
+    }
+
+    @RequestMapping(value = "/logout", method = RequestMethod.GET)
+    public String login(HttpServletRequest request, HttpServletResponse response, @RequestParam (required = false) String url,Model model) {
+        CookieUtils.deleteCookie(response, "token");
+
+        return login(url, request, model);
     }
 }

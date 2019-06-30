@@ -1,6 +1,6 @@
 package com.fhb.sso.core.service;
 
-import com.fhb.sso.core.domain.User;
+import com.fhb.common.domain.User;
 import com.fhb.sso.core.mapper.UserMapper;
 import com.fhb.sso.core.redis.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
