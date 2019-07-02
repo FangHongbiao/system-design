@@ -10,6 +10,24 @@
 4. 商品详情页开发
 5. 对系统对初步压测
     1. 暴露的问题: 商品超卖
+    解决方案: 更新的同时需要判断库.(update操作是加锁的，所以两个条件可同时满足)
+    ```
+    @Update("update miaosha_goods set stock_count = stock_count - 1 where goods_id = #{goodsId} and stock_count > 0}")
+    public int reduceStock(MiaoshaGoods g);
+    ```
+
+
+### 细节问题的处理方案
+1. 商品超卖
+解决方案: 通过数据库锁实现。更新的同时需要判断库.(update操作是加锁的，所以两个条件可同时满足)
+```
+@Update("update miaosha_goods set stock_count = stock_count - 1 where goods_id = #{goodsId} and stock_count > 0}")
+public int reduceStock(MiaoshaGoods g);
+```
+2. 同一用户秒杀到多个商品(当用户同时发出了两个请求，间隔非常短时，有可能出现)
+解决方案: 借助数据库唯一索引实现。对miaosha_order表中user_id和goods_id做唯一索引
+
+
 
 ### 秒杀方案优化
 1. 页面优化技术
@@ -22,8 +40,23 @@
                 3. 结果输出
         2. 对象缓存
     2. 页面静态化， 前后端分离
+        1. 优点: 可以充分利用浏览器缓存
     3. 静态资源优化
+        1. JS/CSS压缩，减少流量
+        2. 多个JS/CSS组合，减少连接数
     4. CDN优化
+
+### 教程bug
+1. 超卖问题解决方案，存在扣减库存失败却写入了订单
+```java
+@Transactional
+public OrderInfo miaosha(MiaoshaUser user, GoodsVo goods) {
+    //减库存 下订单 写入秒杀订单
+    goodsService.reduceStock(goods);
+    //order_info maiosha_order
+    return orderService.createOrder(user, goods);
+}
+```
 
 ### 遇到的问题
 1. idea 连接不上 mysql(08001错误): [mysql8.0驱动问题](https://blog.csdn.net/m0_37713761/article/details/89735831)
@@ -46,7 +79,7 @@
 1. 秒杀系统中的MQ该如何选择
     1. [不同MQ之间的对比]
 2. 前后端问题，前后端认证的同步问题
-
+3. 在很多Controller中都要判断user是否为空，拦截器是更好的方法，然后用注解@NeedLogin来检测登录
 
 ### 知识点
 1. 使用HandlerMethodArgumentResolver，根据token进行全局的user对象注入
@@ -131,3 +164,20 @@ public class WebConfig  extends WebMvcConfigurerAdapter{
     2. 修改数据时，先修改数据库，修改成功删除缓存
 4. 为什么不同模块调用时，需要调用其他模块的service而不调用dao？
 答: 因为service层中可能使用了缓存，效率高
+5. Get与Post提交方式的区别
+    1. GET幂等
+6. [Springboot 配置静态页面缓存](https://docs.spring.io/spring-boot/docs/1.5.21.RELEASE/reference/htmlsingle/)
+```
+spring.resources.add-mappings=true # Enable default resource handling.
+spring.resources.cache-period= # Cache period for the resources served by the resource handler, in seconds.
+spring.resources.chain.cache=true # Enable caching in the Resource chain.
+spring.resources.chain.enabled= # Enable the Spring Resource Handling chain. Disabled by default unless at least one strategy has been enabled.
+spring.resources.chain.gzipped=false # Enable resolution of already gzipped resources.
+spring.resources.chain.html-application-cache=false # Enable HTML5 application cache manifest rewriting.
+spring.resources.chain.strategy.content.enabled=false # Enable the content Version Strategy.
+spring.resources.chain.strategy.content.paths=/** # Comma-separated list of patterns to apply to the Version Strategy.
+spring.resources.chain.strategy.fixed.enabled=false # Enable the fixed Version Strategy.
+spring.resources.chain.strategy.fixed.paths=/** # Comma-separated list of patterns to apply to the Version Strategy.
+spring.resources.chain.strategy.fixed.version= # Version string to use for the Version Strategy.
+spring.resources.static-locations=classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/ # Locations of static resources.
+```
