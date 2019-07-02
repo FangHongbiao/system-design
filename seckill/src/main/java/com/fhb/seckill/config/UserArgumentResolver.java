@@ -64,6 +64,5 @@ public class UserArgumentResolver implements HandlerMethodArgumentResolver {
         }
         return null;
     }
-
 }
 
