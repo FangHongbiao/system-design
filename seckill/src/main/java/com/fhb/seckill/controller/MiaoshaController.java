@@ -1,5 +1,6 @@
 package com.fhb.seckill.controller;
 
+import com.fhb.seckill.access.AccessLimit;
 import com.fhb.seckill.domain.MiaoshaOrder;
 import com.fhb.seckill.domain.MiaoshaUser;
 import com.fhb.seckill.rabbitmq.MQSender;
@@ -85,6 +86,7 @@ public class MiaoshaController implements InitializingBean {
 
     }
 
+    @AccessLimit(seconds=5, maxCount=5)
     @RequestMapping(value = "/path", method = RequestMethod.GET)
     @ResponseBody
     public Result<String> getMiaoshaPath(HttpServletRequest request, MiaoshaUser user, @RequestParam("goodsId") long goodsId, @RequestParam(value = "verifyCode", defaultValue = "0") int verfifyCode) {
@@ -94,17 +96,17 @@ public class MiaoshaController implements InitializingBean {
             return Result.error(CodeMsg.SESSION_ERROR);
         }
 
-        // 做防刷限流, 查询访问次数
-        String uri = request.getRequestURI();
-        String key = uri + "_" + user.getId();
-        Integer count = redisService.get(AccessKey.access, key, Integer.class);
-        if (count == null) {
-            redisService.set(AccessKey.access, key, 1);
-        } else if (count < 5){
-            redisService.incr(AccessKey.access, key);
-        } else {
-            return Result.error(CodeMsg.ACCESS_LIMIT_REACHED);
-        }
+//        // 做防刷限流, 查询访问次数
+//        String uri = request.getRequestURI();
+//        String key = uri + "_" + user.getId();
+//        Integer count = redisService.get(AccessKey.access, key, Integer.class);
+//        if (count == null) {
+//            redisService.set(AccessKey.access, key, 1);
+//        } else if (count < 5){
+//            redisService.incr(AccessKey.access, key);
+//        } else {
+//            return Result.error(CodeMsg.ACCESS_LIMIT_REACHED);
+//        }
 
 
         boolean check = miaoshaService.checkVerifyCode(user, goodsId, verfifyCode);

@@ -75,6 +75,103 @@ public int reduceStock(MiaoshaGoods g);
         1. 可选方案:
             1. 定时器计时技术, 定时器需要刷新
             2. 充分利用缓存. 设置有效期
+        2. 代码优化: 使用拦截器和自定义注解减少对业务的侵入
+            1. 自定义访问控制注解
+            ```java
+            @Retention(RetentionPolicy.RUNTIME)
+            @Target(ElementType.METHOD)
+            public @interface AccessLimit {
+
+                int seconds();
+                int maxCount();
+                boolean needLogin() default true;
+            }
+
+            ```
+            2. 自定义Interceptor拦截请求,获取注解信息
+            ```java
+            @Service
+            public class AccessInterceptor extends HandlerInterceptorAdapter {
+
+                @Autowired
+                MiaoshaUserService userService;
+
+                @Autowired
+                RedisService redisService;
+
+                @Override
+                public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+
+                    if (handler instanceof HandlerMethod) {
+
+                        MiaoshaUser user = getUser(request, response);
+
+                        UserContext.setUser(user);
+
+                        HandlerMethod hm = (HandlerMethod) handler;
+
+                        AccessLimit accessLimit = hm.getMethodAnnotation(AccessLimit.class);
+
+                        if (accessLimit == null) {
+                            return true;
+                        }
+
+
+                        int seconds = accessLimit.seconds();
+                        int maxCount = accessLimit.maxCount();
+                        boolean needLogin = accessLimit.needLogin();
+
+                        String key = request.getRequestURI();
+
+                        if (needLogin) {
+                            if (user == null) {
+                                render(response, CodeMsg.SESSION_ERROR);
+                                return false;
+                            }
+                            key += "_" + user.getId();
+                        }
+
+                        AccessKey ak = AccessKey.withExpire(seconds);
+                        Integer count = redisService.get(ak, key, Integer.class);
+                        if (count == null) {
+                            redisService.set(ak, key, 1);
+                        } else if (count < maxCount) {
+                            redisService.incr(ak, key);
+                        } else {
+                            render(response, CodeMsg.ACCESS_LIMIT_REACHED);
+                            return false;
+                        }
+
+
+                        return true;
+                    }
+
+                    return true;
+                }
+            ```
+            3. 添加拦截器
+            ```java
+            @Configuration
+            public class WebConfig  extends WebMvcConfigurerAdapter{
+
+                @Autowired
+                UserArgumentResolver userArgumentResolver;
+
+                @Autowired
+                AccessInterceptor accessInterceptor;
+
+                @Override
+                public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+                    argumentResolvers.add(userArgumentResolver);
+                }
+
+                @Override
+                public void addInterceptors(InterceptorRegistry registry) {
+                    registry.addInterceptor(accessInterceptor);
+                }
+            }
+            ```
+
 
 ### 教程bug
 1. 超卖问题解决方案，存在扣减库存失败却写入了订单 (接口优化中进行了改正)
