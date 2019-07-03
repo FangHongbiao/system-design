@@ -29,6 +29,8 @@ public class MQSender {
     AmqpTemplate amqpTemplate;
 
 
+
+    // --------------------------------start test rabbitmq----------------------------------------
     public void send(Object message) {
 
         String msg = RedisService.beanToString(message);
@@ -61,5 +63,17 @@ public class MQSender {
         properties.setHeader("header2", "value2");
         Message obj = new Message(msg.getBytes(), properties);
         amqpTemplate.convertAndSend(MQConfig.HEADERS_EXCHANGE, "", obj);
+    }
+    // --------------------------------end test rabbitmq----------------------------------------
+
+
+    public void sendMiaoshaMessage(MiaoshaMessage mm) {
+
+        String msg = RedisService.beanToString(mm);
+
+        log.info("send message: " + msg);
+
+        amqpTemplate.convertAndSend(MQConfig.MIAOSHA_QUEUE, msg);
+
     }
 }

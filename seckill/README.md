@@ -57,9 +57,10 @@ public int reduceStock(MiaoshaGoods g);
         3. 请求入队，立即返回排队中
         4. 请求出队，生成订单，减少库存
         5. 客户端轮询，是否秒杀成功
+        6. 本地使用HaspMap对秒杀完的商品进行缓存，减少Redis访问
 
 ### 教程bug
-1. 超卖问题解决方案，存在扣减库存失败却写入了订单
+1. 超卖问题解决方案，存在扣减库存失败却写入了订单 (接口优化中进行了改正)
 ```java
 @Transactional
 public OrderInfo miaosha(MiaoshaUser user, GoodsVo goods) {
@@ -222,3 +223,4 @@ spring.resources.static-locations=classpath:/META-INF/resources/,classpath:/reso
         2. 创建消息接受者
         3. 创建消息发送者
     5. 安装web管理插件 `rabbitmq-plugins enable rabbitmq_management`
+8. springboot系统初始化做一些工作： Controller实现InitializingBean接口中的afterPropertiesSet方法

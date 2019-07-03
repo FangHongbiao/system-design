@@ -45,7 +45,8 @@
             <td>
                 <form id="miaoshaForm">
                     <!--<button class="btn btn-primary btn-block" type="submit" id="buyButton">立即秒杀</button>-->
-                    <button class="btn btn-primary btn-block" type="button" id="buyButton" onclick="doMiaosha()">立即秒杀</button>
+                    <button class="btn btn-primary btn-block" type="button" id="buyButton" onclick="doMiaosha()">立即秒杀
+                    </button>
                     <input type="hidden" name="goodsId" id="goodsId"/>
                 </form>
             </td>
@@ -72,6 +73,45 @@
     });
 
 
+    function getMiaoshaResult(goodsId) {
+        g_showLoading();
+        $.ajax({
+            url: "/miaosha/result",
+            type: "GET",
+            data: {
+                goodsId: $("#goodsId").val()
+            },
+            success: function (data) {
+
+                if (data.code == 0) {
+                    var result = data.data
+
+                    if (result < 0) {
+                        layer.msg("对不起，秒杀失败")
+                    } else if (result == 0) {
+                        setTimeout(function () {
+                            getMiaoshaResult(goodsId)
+                        }, 50)
+                    } else {
+                        layer.confirm("秒杀成功， 查看订单?", {btn: ["确定", "取消"]},
+                            function () {
+                                window.location.href = '/order_detail.htm?orderId=' + result
+                            },
+                            function () {
+                                layer.closeAll()
+                            });
+                    }
+
+                } else {
+                    layer.msg(data.msg)
+                }
+            },
+            error: function () {
+                layer.msg("客户端请求有误")
+            }
+        })
+    }
+
     function doMiaosha() {
         $.ajax({
             url: "/miaosha/do_miaosha",
@@ -80,12 +120,9 @@
                 goodsId: $("#goodsId").val()
             },
             success: function (data) {
-                console.log("doMiaosha")
-                console.log(data)
                 if (data.code == 0) {
-                    console.log("___________")
-                    console.log(data)
-                    window.location.href='/order_detail.htm?orderId=' + data.data.id
+//                    window.location.href='/order_detail.htm?orderId=' + data.data.id
+                    getMiaoshaResult($("#goodsId").val());
                 } else {
                     layer.msg(data.msg)
                 }
