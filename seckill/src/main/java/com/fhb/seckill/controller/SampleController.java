@@ -1,6 +1,7 @@
 package com.fhb.seckill.controller;
 
 import com.fhb.seckill.domain.User;
+import com.fhb.seckill.rabbitmq.MQSender;
 import com.fhb.seckill.redis.RedisService;
 import com.fhb.seckill.redis.UserKey;
 import com.fhb.seckill.result.CodeMsg;
@@ -22,7 +23,42 @@ public class SampleController {
 	
 	@Autowired
     RedisService redisService;
-	
+
+	@Autowired
+    MQSender mqSender;
+
+    @RequestMapping("/mq/header")
+    @ResponseBody
+    public Result<String> mqHeader() {
+
+        mqSender.sendHeader("hello rabbitmq header");
+        return Result.success("hello rabbitmq header");
+    }
+
+    @RequestMapping("/mq/fanout")
+    @ResponseBody
+    public Result<String> mqFanout() {
+
+        mqSender.sendFanout("hello rabbitmq fanout");
+        return Result.success("hello rabbitmq fanout");
+    }
+
+    @RequestMapping("/mq/topic")
+    @ResponseBody
+    public Result<String> mqTppic() {
+
+        mqSender.sendTopic("hello rabbitmq topic");
+        return Result.success("hello rabbitmq topic");
+    }
+
+    @RequestMapping("/mq")
+    @ResponseBody
+    public Result<String> mq() {
+
+        mqSender.send("hello rabbitmq");
+        return Result.success("hello rabbitmq");
+    }
+
     @RequestMapping("/hello")
     @ResponseBody
     public Result<String> home() {
@@ -69,7 +105,7 @@ public class SampleController {
     	User user  = new User();
     	user.setId(1);
     	user.setName("1111");
-    	redisService.set(UserKey.getById, ""+1, user);//UserKey:id1
+    	redisService.set(UserKey.getById, ""+1, user);
         return Result.success(true);
     }
     

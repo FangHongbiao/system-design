@@ -45,6 +45,18 @@ public int reduceStock(MiaoshaGoods g);
         1. JS/CSS压缩，减少流量
         2. 多个JS/CSS组合，减少连接数
     4. CDN优化
+2. 秒杀接口优化
+    1. 设计方向
+        1. Redis预减库存，减少数据库访问
+        2. 内存标记减少Redis访问
+        3. 请求先入队缓冲，异步下单，增强用户体验
+        4. Nginx水平扩展
+    2. 整体流程
+        1. 系统初始化，把商品库存数量加载到Redis
+        2. 收到请求，Redis预减库存，库存不足，直接返回，否则进入3
+        3. 请求入队，立即返回排队中
+        4. 请求出队，生成订单，减少库存
+        5. 客户端轮询，是否秒杀成功
 
 ### 教程bug
 1. 超卖问题解决方案，存在扣减库存失败却写入了订单
@@ -64,6 +76,11 @@ public OrderInfo miaosha(MiaoshaUser user, GoodsVo goods) {
     1. 配置文件提供了redis.password就会以认证的方式请求服务器，即使密码为空也会出错
     2. 配置文件中注释掉`#redis.password=`即可
     2. [参考资料](https://blog.csdn.net/rchm8519/article/details/48347797)
+3. RabbitMQ连接出错: guest默认不允许远程连接
+    1. `org.springframework.amqp.rabbit.listener.exception.FatalListenerStartupException: Authentication failure`
+    2. [解决方案](https://www.rabbitmq.com/access-control.html): rabbitmq/etc/rabbitmq下新建一个rabbitmq.config文件，写入`[{rabbit, [{loopback_users, []}]}].`
+4. 设置了topic交换机,但是却都能收到消息
+在一开始的时候绑定错了，后来虽然修改了绑定，但是rabbitmq里保存着原来的，将错误的解绑即可
 
 ### 性能测试截图
 1. basic版本
@@ -181,3 +198,27 @@ spring.resources.chain.strategy.fixed.paths=/** # Comma-separated list of patter
 spring.resources.chain.strategy.fixed.version= # Version string to use for the Version Strategy.
 spring.resources.static-locations=classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/ # Locations of static resources.
 ```
+7. RabbitMQ安装
+    1. 安装erlang
+        1. 下载erlang源码`wget http://erlang.org/download/otp_src_22.0.tar.gz`
+        2. 安装依赖 `yum install ncurses-devel`
+        3. 解压
+        3. 配置 `./configure --prefix=/usr/local/erlang20 --without-javac`
+        4. 编译 `make -j 4`
+
+    2. 安装RabbitMQ
+        1. 下载RabbitMQ `https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.7.15/rabbitmq-server-generic-unix-3.7.15.tar.xz`
+        2. 解压
+            1. `xz -d [file_name.xz]`
+            2. `tar xf [file_name.tar]`
+        3. 安装依赖
+            1. `yum install python -y`
+            2. `yum install xmlto -y`
+            3. `yum install python-simplejson -y`
+        4. mv ... /usr/local/rabbitmq
+    3. 配置erlang和rabbitmq的环境变量
+    4. 与springboot的集成
+        1. 添加依赖spring-boot-starter-amqp
+        2. 创建消息接受者
+        3. 创建消息发送者
+    5. 安装web管理插件 `rabbitmq-plugins enable rabbitmq_management`
