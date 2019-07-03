@@ -5,6 +5,7 @@ import com.fhb.seckill.domain.MiaoshaUser;
 import com.fhb.seckill.rabbitmq.MQSender;
 import com.fhb.seckill.rabbitmq.MiaoshaMessage;
 import com.fhb.seckill.redis.GoodsKey;
+import com.fhb.seckill.redis.MiaoshaKey;
 import com.fhb.seckill.redis.RedisService;
 import com.fhb.seckill.result.CodeMsg;
 import com.fhb.seckill.result.Result;
@@ -12,16 +13,21 @@ import com.fhb.seckill.service.GoodsService;
 import com.fhb.seckill.service.MiaoshaService;
 import com.fhb.seckill.service.MiaoshaUserService;
 import com.fhb.seckill.service.OrderService;
+import com.fhb.seckill.util.MD5Util;
+import com.fhb.seckill.util.UUIDUtil;
 import com.fhb.seckill.vo.GoodsVo;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
+import javax.imageio.ImageIO;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +55,56 @@ public class MiaoshaController implements InitializingBean {
     @Autowired
     MQSender sender;
 
+
     private Map<Long, Boolean> localOverMap = new HashMap<>();
+
+    @RequestMapping(value = "/verifyCode", method = RequestMethod.GET)
+    @ResponseBody
+    public Result<String> getMiaoshaVerifyCode(HttpServletRequest request, HttpServletResponse response, Model model, MiaoshaUser user, @RequestParam("goodsId") long goodsId) {
+
+        model.addAttribute("user", user);
+        System.out.println(user);
+
+        if (user == null) {
+            return Result.error(CodeMsg.SESSION_ERROR);
+        }
+
+        BufferedImage image = miaoshaService.createVerifyCode(user, goodsId);
+
+        try {
+            ServletOutputStream out = response.getOutputStream();
+            ImageIO.write(image, "JPEG", out);
+            out.flush();
+            out.close();
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error(CodeMsg.MIAO_SHA_FAIL);
+        }
+
+    }
+
+    @RequestMapping(value = "/path", method = RequestMethod.GET)
+    @ResponseBody
+    public Result<String> getMiaoshaPath(Model model, MiaoshaUser user, @RequestParam("goodsId") long goodsId, @RequestParam("verifyCode") int verfifyCode) {
+
+        model.addAttribute("user", user);
+        System.out.println(user);
+
+        if (user == null) {
+            return Result.error(CodeMsg.SESSION_ERROR);
+        }
+
+        String path = miaoshaService.createMiaoshaPath(user, goodsId);
+
+        boolean check = miaoshaService.checkVerifyCode(user, goodsId, verfifyCode);
+
+        if (!check) {
+            return Result.error(CodeMsg.REQUEST_ILLEGAL);
+        }
+
+        return Result.success(path);
+    }
 
 
     /**
@@ -84,10 +139,10 @@ public class MiaoshaController implements InitializingBean {
      * QPS:1306
      * 5000 * 10
      */
-    @RequestMapping(value = "/do_miaosha", method = RequestMethod.POST)
+    @RequestMapping(value = "/{path}/do_miaosha", method = RequestMethod.POST)
     @ResponseBody
     public Result<Integer> miaosha(Model model, MiaoshaUser user,
-                                   @RequestParam("goodsId") long goodsId) {
+                                   @RequestParam("goodsId") long goodsId, @PathVariable("path") String path) {
         model.addAttribute("user", user);
         System.out.println(user);
 
@@ -95,6 +150,14 @@ public class MiaoshaController implements InitializingBean {
             return Result.error(CodeMsg.SESSION_ERROR);
         }
 
+        // 验证path
+        boolean check = miaoshaService.checkPath(user, goodsId, path);
+
+        if (!check) {
+            return Result.error(CodeMsg.REQUEST_ILLEGAL);
+        }
+
+        // 内存标记, 减少Redis访问
         Boolean over = localOverMap.get(goodsId);
         if (over) {
             return Result.error(CodeMsg.MIAO_SHA_OVER);

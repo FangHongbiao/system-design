@@ -58,6 +58,23 @@ public int reduceStock(MiaoshaGoods g);
         4. 请求出队，生成订单，减少库存
         5. 客户端轮询，是否秒杀成功
         6. 本地使用HaspMap对秒杀完的商品进行缓存，减少Redis访问
+3. 安全优化
+    1. 秒杀接口隐藏
+        1. 思路: 秒杀开始之前, 先去请求接口获取秒杀地址
+        2. 具体流程
+            1. 接口改造, 带上PathVariable参数
+            2. 添加生成地址的接口
+            3. 秒杀收到请求，先验证PathVariable
+    2. 数学公式验证码
+        1. 思路: 点击秒杀前, 使用验证码防止机器刷接口, 同时起到分散用户请求的作用
+        2. 具体流程
+            1. 添加生成验证码的接口
+            2. 在获取秒杀路径的时候, 验证验证码
+            3. ScriptEngine的使用
+    3. 接口限流防刷
+        1. 可选方案:
+            1. 定时器计时技术, 定时器需要刷新
+            2. 充分利用缓存. 设置有效期
 
 ### 教程bug
 1. 超卖问题解决方案，存在扣减库存失败却写入了订单 (接口优化中进行了改正)
@@ -224,3 +241,14 @@ spring.resources.static-locations=classpath:/META-INF/resources/,classpath:/reso
         3. 创建消息发送者
     5. 安装web管理插件 `rabbitmq-plugins enable rabbitmq_management`
 8. springboot系统初始化做一些工作： Controller实现InitializingBean接口中的afterPropertiesSet方法
+9. git tag用法
+```
+git tag　　//查看tag
+git tag test_tag c809ddbf83939a89659e51dc2a5fe183af384233　　　　//在某个commit 上打tag
+git tag
+...
+git push origin test_tag　　　　//!!!本地tag推送到线上
+...
+git tag -d test_tag　　　　　　　　//本地删除tag
+git push origin :refs/tags/test_tag　　　　//本地tag删除了，再执行该句，删除线上tag
+```
